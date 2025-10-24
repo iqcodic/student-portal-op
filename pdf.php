@@ -1,5 +1,16 @@
 <?php
-include 'config.php';
+// Database connection
+$host = 'sql100.infinityfree.com';
+$dbname = 'if0_40190613_studentportal';
+$username = 'if0_40190613';
+$password = 'nsZHXTsMtGo';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
 
 if(!isset($_GET['roll_number'])) {
     die("Roll number is required");
@@ -54,21 +65,24 @@ $html = '
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-        .student-info { margin-bottom: 20px; }
+        .student-info { margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 5px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th, td { border: 1px solid #000; padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        th { background-color: #343a40; color: white; }
         .fail { background-color: #ffcccc; }
-        .pass { color: green; font-weight: bold; }
-        .fail-text { color: red; font-weight: bold; }
-        .total-row { background-color: #e6e6e6; font-weight: bold; }
-        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+        .pass { color: #28a745; font-weight: bold; }
+        .fail-text { color: #dc3545; font-weight: bold; }
+        .total-row { background-color: #e9ecef; font-weight: bold; }
+        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
+        .result-badge { padding: 5px 10px; border-radius: 20px; color: white; font-weight: bold; }
+        .pass-badge { background-color: #28a745; }
+        .fail-badge { background-color: #dc3545; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>STUDENT PORTAL - ACADEMIC RESULT</h1>
-        <h3>Official Result Card</h3>
+        <h1>🎓 STUDENT RESULT PORTAL</h1>
+        <h3>Official Academic Result Card</h3>
     </div>
     
     <div class="student-info">
@@ -92,12 +106,13 @@ foreach($marks as $mark) {
     $is_fail = $mark['marks_obtained'] < ($mark['max_marks'] / 2);
     $status = $is_fail ? 'FAIL' : 'PASS';
     $row_class = $is_fail ? 'fail' : '';
+    $badge_class = $is_fail ? 'fail-badge' : 'pass-badge';
     
     $html .= '<tr class="' . $row_class . '">
                 <td>' . $mark['subject_name'] . '</td>
                 <td>' . $mark['max_marks'] . '</td>
                 <td>' . $mark['marks_obtained'] . '</td>
-                <td class="' . ($is_fail ? 'fail-text' : 'pass') . '">' . $status . '</td>
+                <td><span class="result-badge ' . $badge_class . '">' . $status . '</span></td>
             </tr>';
 }
 
@@ -107,7 +122,11 @@ $html .= '</tbody>
                 <td><strong>TOTAL</strong></td>
                 <td><strong>' . $total_max . '</strong></td>
                 <td><strong>' . $total_obtained . '</strong></td>
-                <td class="' . ($all_passed ? 'pass' : 'fail-text') . '"><strong>' . $result_status . '</strong></td>
+                <td>
+                    <span class="result-badge ' . ($all_passed ? 'pass-badge' : 'fail-badge') . '">
+                        ' . $result_status . '
+                    </span>
+                </td>
             </tr>
             <tr class="total-row">
                 <td colspan="2"><strong>PERCENTAGE</strong></td>
@@ -117,8 +136,8 @@ $html .= '</tbody>
     </table>
     
     <div class="footer">
-        <p>Generated on: ' . date('d-m-Y H:i:s') . '</p>
-        <p><em>This is a computer generated result card.</em></p>
+        <p><strong>Generated on:</strong> ' . date('d-m-Y H:i:s') . '</p>
+        <p><em>This is a computer generated result card. No signature required.</em></p>
     </div>
 </body>
 </html>';
