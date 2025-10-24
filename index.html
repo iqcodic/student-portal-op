@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Result Portal</title>
+    <title>Student Result Search</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .hero-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -12,36 +13,226 @@
             padding: 60px 0;
             text-align: center;
         }
+        .pass-status { color: green; font-weight: bold; }
+        .fail-status { color: red; font-weight: bold; }
+        .fail-mark { background-color: #ffcccc; }
+        .result-card { border: 2px solid #28a745; }
+        .student-photo { max-width: 200px; max-height: 200px; border: 3px solid #28a745; }
+        .loading-spinner { display: none; }
     </style>
 </head>
 <body>
+    <!-- Hero Section -->
     <div class="hero-section">
         <div class="container">
-            <h1>Student Result Portal</h1>
+            <h1><i class="fas fa-graduation-cap"></i> Student Result Portal</h1>
             <p class="lead">Check your academic results by Roll Number</p>
         </div>
     </div>
 
+    <!-- Search Form -->
     <div class="container mt-4">
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <div class="card">
+                <div class="card shadow">
                     <div class="card-body">
-                        <h5 class="card-title text-center">Search Your Result</h5>
-                        <p class="text-center text-muted">
-                            <strong>Note:</strong> This is a demo version. 
-                            For live results, please visit our main portal.
-                        </p>
-                        <div class="alert alert-info">
-                            <strong>Live Website:</strong><br>
-                            <a href="http://your-website.epizy.com" class="btn btn-success btn-sm mt-2">
-                                Visit Live Portal
-                            </a>
+                        <h5 class="card-title text-center"><i class="fas fa-search"></i> Search Your Result</h5>
+                        <form id="searchForm">
+                            <div class="mb-3">
+                                <label for="roll_number" class="form-label">Enter Roll Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                    <input type="text" class="form-control" id="roll_number" 
+                                           placeholder="e.g., STU0001" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Search Result
+                            </button>
+                        </form>
+                        
+                        <!-- Loading Spinner -->
+                        <div id="loadingSpinner" class="loading-spinner text-center mt-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Fetching result from server...</p>
                         </div>
                     </div>
                 </div>
+                
+                <div id="errorMessage" class="alert alert-danger mt-3 text-center" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <span id="errorText"></span>
+                </div>
             </div>
         </div>
+
+        <!-- Display Result -->
+        <div id="resultSection" class="row justify-content-center mt-4" style="display: none;">
+            <!-- Result will be shown here by JavaScript -->
+        </div>
     </div>
+
+    <script>
+        // API URL - Aapke actual server ka URL
+        const API_URL = 'https://your-username.epizy.com/student-portal/api.php';
+        
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const rollNumber = document.getElementById('roll_number').value.trim();
+            const errorDiv = document.getElementById('errorMessage');
+            const resultDiv = document.getElementById('resultSection');
+            const loadingDiv = document.getElementById('loadingSpinner');
+            
+            // Hide previous messages
+            errorDiv.style.display = 'none';
+            resultDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ roll_number: rollNumber })
+                });
+                
+                const data = await response.json();
+                
+                loadingDiv.style.display = 'none';
+                
+                if (data.success) {
+                    showResult(data.student, data.marks);
+                } else {
+                    errorDiv.style.display = 'block';
+                    document.getElementById('errorText').textContent = data.error;
+                }
+                
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                errorDiv.style.display = 'block';
+                document.getElementById('errorText').textContent = 'Network error. Please try again.';
+                console.error('Error:', error);
+            }
+        });
+
+        // Show result function
+        function showResult(student, marks) {
+            let totalObtained = 0;
+            let totalMax = 0;
+            let allPassed = true;
+            
+            // Calculate totals
+            marks.forEach(mark => {
+                totalObtained += parseInt(mark.marks_obtained);
+                totalMax += parseInt(mark.max_marks);
+                if (parseInt(mark.marks_obtained) < (parseInt(mark.max_marks) / 2)) {
+                    allPassed = false;
+                }
+            });
+            
+            const percentage = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(2) : 0;
+            const resultStatus = allPassed ? 'PASS' : 'FAIL';
+            const resultClass = allPassed ? 'pass-status' : 'fail-status';
+            
+            // Generate marks table
+            let marksTable = '';
+            marks.forEach(mark => {
+                const isFail = parseInt(mark.marks_obtained) < (parseInt(mark.max_marks) / 2);
+                const rowClass = isFail ? 'fail-mark' : '';
+                const statusClass = isFail ? 'fail-status' : 'pass-status';
+                const statusText = isFail ? 'FAIL' : 'PASS';
+                
+                marksTable += `
+                    <tr class="${rowClass}">
+                        <td>${mark.subject_name}</td>
+                        <td>${mark.max_marks}</td>
+                        <td>${mark.marks_obtained}</td>
+                        <td class="${statusClass}">
+                            <i class="fas ${isFail ? 'fa-times' : 'fa-check'}"></i>
+                            ${statusText}
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            // Show result
+            const resultDiv = document.getElementById('resultSection');
+            resultDiv.innerHTML = `
+                <div class="col-md-10">
+                    <div class="card result-card shadow">
+                        <div class="card-header bg-success text-white text-center">
+                            <h4 class="mb-0"><i class="fas fa-award"></i> Academic Result</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 text-center">
+                                    ${student.photo ? 
+                                        `<img src="${student.photo}" class="student-photo img-fluid rounded mb-3" alt="Student Photo">` : 
+                                        `<div class="bg-light rounded mb-3 d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <i class="fas fa-user-graduate fa-5x text-muted"></i>
+                                        </div>`
+                                    }
+                                    <h5>${student.name}</h5>
+                                    <p class="text-muted">
+                                        <i class="fas fa-id-card"></i> Roll No: ${student.roll_number}
+                                    </p>
+                                    <p>
+                                        <i class="fas fa-user-friends"></i> Father: ${student.father}
+                                    </p>
+                                </div>
+                                
+                                <div class="col-md-8">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th><i class="fas fa-book"></i> Subject</th>
+                                                <th><i class="fas fa-chart-line"></i> Max Marks</th>
+                                                <th><i class="fas fa-trophy"></i> Obtained</th>
+                                                <th><i class="fas fa-info-circle"></i> Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${marksTable}
+                                        </tbody>
+                                        <tfoot class="table-secondary">
+                                            <tr>
+                                                <td><strong><i class="fas fa-calculator"></i> TOTAL</strong></td>
+                                                <td><strong>${totalMax}</strong></td>
+                                                <td><strong>${totalObtained}</strong></td>
+                                                <td class="${resultClass}">
+                                                    <strong>
+                                                        <i class="fas ${allPassed ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                                                        ${resultStatus}
+                                                    </strong>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2"><strong><i class="fas fa-percentage"></i> PERCENTAGE</strong></td>
+                                                <td colspan="2"><strong>${percentage}%</strong></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    
+                                    <div class="text-center mt-4">
+                                        <button onclick="window.print()" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-print"></i> Print Result
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultDiv.style.display = 'flex';
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+    </html>
