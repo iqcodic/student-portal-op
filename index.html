@@ -3,129 +3,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Result Search</title>
+    <title>Student Results Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .hero-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 60px 0;
+            padding: 80px 0;
             text-align: center;
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
         }
-        .pass-status { color: green; font-weight: bold; }
-        .fail-status { color: red; font-weight: bold; }
-        .fail-mark { background-color: #ffcccc; }
-        .result-card { border: 2px solid #28a745; }
-        .student-photo { max-width: 200px; max-height: 200px; border: 3px solid #28a745; }
-        .loading-spinner { display: none; }
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .student-card {
+            transition: transform 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .student-card:hover {
+            transform: translateY(-5px);
+        }
+        .student-photo {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 3px solid #007bff;
+        }
+        .photo-placeholder {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+        .result-badge {
+            font-size: 0.8em;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 30px 0;
+            margin-top: 50px;
+        }
+        .feature-icon {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+        .pass-status { color: #198754; font-weight: bold; }
+        .fail-status { color: #dc3545; font-weight: bold; }
+        .pass-bg { background-color: #f8fff9 !important; }
+        .fail-bg { background-color: #fff9f9 !important; }
     </style>
 </head>
 <body>
-    <!-- Hero Section -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-graduation-cap"></i> Student Results Portal
+            </a>
+        </div>
+    </nav>
+
     <div class="hero-section">
         <div class="container">
-            <h1><i class="fas fa-graduation-cap"></i> Student Result Portal</h1>
-            <p class="lead">Check your academic results by Roll Number</p>
-        </div>
-    </div>
-
-    <!-- Search Form -->
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow">
-                    <div class="card-body">
-                        <h5 class="card-title text-center"><i class="fas fa-search"></i> Search Your Result</h5>
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-4">Find Student Results</h1>
+                    <p class="lead mb-5">Search by Roll Number to view student details and download result PDF</p>
+                    
+                    <div class="search-container">
+                        <h3 class="text-dark mb-4">
+                            <i class="fas fa-search text-primary"></i> Search Student
+                        </h3>
                         <form id="searchForm">
-                            <div class="mb-3">
-                                <label for="roll_number" class="form-label">Enter Roll Number</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                                    <input type="text" class="form-control" id="roll_number" 
-                                           placeholder="e.g., STU0001" required>
-                                </div>
+                            <div class="input-group input-group-lg">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="rollNumber" 
+                                       placeholder="Enter Roll Number (e.g., STU0001)" 
+                                       required>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-search"></i> Search Result
-                            </button>
                         </form>
                         
-                        <!-- Loading Spinner -->
-                        <div id="loadingSpinner" class="loading-spinner text-center mt-3">
+                        <div class="loading-spinner text-center mt-4" id="loadingSpinner">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <p class="mt-2">Fetching result from server...</p>
+                            <p class="mt-2 text-muted">Searching student data...</p>
                         </div>
                     </div>
                 </div>
-                
-                <div id="errorMessage" class="alert alert-danger mt-3 text-center" style="display: none;">
-                    <i class="fas fa-exclamation-triangle"></i> 
-                    <span id="errorText"></span>
-                </div>
             </div>
-        </div>
-
-        <!-- Display Result -->
-        <div id="resultSection" class="row justify-content-center mt-4" style="display: none;">
-            <!-- Result will be shown here by JavaScript -->
         </div>
     </div>
 
+    <div class="container py-5">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <h4>Student Details</h4>
+                <p class="text-muted">View complete student information with photo</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h4>Academic Results</h4>
+                <p class="text-muted">Check subject-wise marks and overall performance</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="feature-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <h4>PDF Download</h4>
+                <p class="text-muted">Download official result in PDF format</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5" id="resultsSection" style="display: none;">
+        <h2 class="text-center mb-4">Student Information</h2>
+        <div id="studentResults"></div>
+    </div>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <p>&copy; 2024 Student Results Portal. All rights reserved.</p>
+            <p class="text-muted">Search student results by roll number</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // API URL - Aapke actual server ka URL
-        const API_URL = 'https://studenddatabase.42web.io/dashboard.php';
+        // ✅ YAHAN APNA SERVER URL DALAIN
+        const API_BASE_URL = 'https://yoursite.infinityfreeapp.com/student-api';
         
         document.getElementById('searchForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const rollNumber = document.getElementById('rollNumber').value.trim();
             
-            const rollNumber = document.getElementById('roll_number').value.trim();
-            const errorDiv = document.getElementById('errorMessage');
-            const resultDiv = document.getElementById('resultSection');
-            const loadingDiv = document.getElementById('loadingSpinner');
-            
-            // Hide previous messages
-            errorDiv.style.display = 'none';
-            resultDiv.style.display = 'none';
-            loadingDiv.style.display = 'block';
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ roll_number: rollNumber })
-                });
-                
-                const data = await response.json();
-                
-                loadingDiv.style.display = 'none';
-                
-                if (data.success) {
-                    showResult(data.student, data.marks);
-                } else {
-                    errorDiv.style.display = 'block';
-                    document.getElementById('errorText').textContent = data.error;
-                }
-                
-            } catch (error) {
-                loadingDiv.style.display = 'none';
-                errorDiv.style.display = 'block';
-                document.getElementById('errorText').textContent = 'Network error. Please try again.';
-                console.error('Error:', error);
+            if (rollNumber) {
+                await searchStudent(rollNumber);
             }
         });
 
-        // Show result function
-        function showResult(student, marks) {
+        async function searchStudent(rollNumber) {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/search.php?roll_number=${encodeURIComponent(rollNumber)}`);
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const studentData = await response.json();
+                
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+                
+                displayStudentResults(studentData);
+                
+            } catch (error) {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                showError('Failed to fetch student data. Please try again.');
+                console.error('Error:', error);
+            }
+        }
+
+        function displayStudentResults(data) {
+            const resultsDiv = document.getElementById('studentResults');
+            
+            if (!data || !data.student) {
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-danger text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <h4>Student Not Found</h4>
+                        <p>No student found with roll number: <strong>${document.getElementById('rollNumber').value}</strong></p>
+                        <p>Please check the roll number and try again.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const student = data.student;
+            const marks = data.marks || [];
+            
             let totalObtained = 0;
             let totalMax = 0;
             let allPassed = true;
             
-            // Calculate totals
             marks.forEach(mark => {
                 totalObtained += parseInt(mark.marks_obtained);
                 totalMax += parseInt(mark.max_marks);
@@ -137,90 +229,86 @@
             const percentage = totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(2) : 0;
             const resultStatus = allPassed ? 'PASS' : 'FAIL';
             const resultClass = allPassed ? 'pass-status' : 'fail-status';
-            
-            // Generate marks table
-            let marksTable = '';
+            const resultBgClass = allPassed ? 'pass-bg' : 'fail-bg';
+
+            let subjectsHtml = '';
             marks.forEach(mark => {
                 const isFail = parseInt(mark.marks_obtained) < (parseInt(mark.max_marks) / 2);
-                const rowClass = isFail ? 'fail-mark' : '';
-                const statusClass = isFail ? 'fail-status' : 'pass-status';
-                const statusText = isFail ? 'FAIL' : 'PASS';
+                const bgClass = isFail ? 'fail-bg' : 'pass-bg';
+                const textClass = isFail ? 'fail-status' : 'pass-status';
                 
-                marksTable += `
-                    <tr class="${rowClass}">
-                        <td>${mark.subject_name}</td>
-                        <td>${mark.max_marks}</td>
-                        <td>${mark.marks_obtained}</td>
-                        <td class="${statusClass}">
-                            <i class="fas ${isFail ? 'fa-times' : 'fa-check'}"></i>
-                            ${statusText}
+                subjectsHtml += `
+                    <tr class="${bgClass}">
+                        <td>
+                            <i class="fas fa-book me-2"></i>
+                            ${mark.subject_name}
+                        </td>
+                        <td class="text-center">${mark.max_marks}</td>
+                        <td class="text-center fw-bold">${mark.marks_obtained}</td>
+                        <td class="text-center ${textClass}">
+                            ${isFail ? 'FAIL' : 'PASS'}
                         </td>
                     </tr>
                 `;
             });
-            
-            // Show result
-            const resultDiv = document.getElementById('resultSection');
-            resultDiv.innerHTML = `
-                <div class="col-md-10">
-                    <div class="card result-card shadow">
-                        <div class="card-header bg-success text-white text-center">
-                            <h4 class="mb-0"><i class="fas fa-award"></i> Academic Result</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-4 text-center">
-                                    ${student.photo ? 
-                                        `<img src="${student.photo}" class="student-photo img-fluid rounded mb-3" alt="Student Photo">` : 
-                                        `<div class="bg-light rounded mb-3 d-flex align-items-center justify-content-center" style="height: 200px;">
-                                            <i class="fas fa-user-graduate fa-5x text-muted"></i>
-                                        </div>`
-                                    }
-                                    <h5>${student.name}</h5>
-                                    <p class="text-muted">
-                                        <i class="fas fa-id-card"></i> Roll No: ${student.roll_number}
-                                    </p>
-                                    <p>
-                                        <i class="fas fa-user-friends"></i> Father: ${student.father}
-                                    </p>
-                                </div>
-                                
-                                <div class="col-md-8">
-                                    <table class="table table-bordered table-hover">
-                                        <thead class="table-dark">
-                                            <tr>
-                                                <th><i class="fas fa-book"></i> Subject</th>
-                                                <th><i class="fas fa-chart-line"></i> Max Marks</th>
-                                                <th><i class="fas fa-trophy"></i> Obtained</th>
-                                                <th><i class="fas fa-info-circle"></i> Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${marksTable}
-                                        </tbody>
-                                        <tfoot class="table-secondary">
-                                            <tr>
-                                                <td><strong><i class="fas fa-calculator"></i> TOTAL</strong></td>
-                                                <td><strong>${totalMax}</strong></td>
-                                                <td><strong>${totalObtained}</strong></td>
-                                                <td class="${resultClass}">
-                                                    <strong>
-                                                        <i class="fas ${allPassed ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                                                        ${resultStatus}
-                                                    </strong>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="2"><strong><i class="fas fa-percentage"></i> PERCENTAGE</strong></td>
-                                                <td colspan="2"><strong>${percentage}%</strong></td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                    
-                                    <div class="text-center mt-4">
-                                        <button onclick="window.print()" class="btn btn-primary btn-lg">
-                                            <i class="fas fa-print"></i> Print Result
-                                        </button>
+
+            resultsDiv.innerHTML = `
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card student-card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        ${student.student_image ? 
+                                            `<img src="${student.student_image}" class="student-photo mb-3" alt="Student Photo" onerror="this.style.display='none'">` :
+                                            `<div class="photo-placeholder mx-auto mb-3">
+                                                <i class="fas fa-user"></i>
+                                            </div>`
+                                        }
+                                        <h4 class="text-primary">${student.student_name}</h4>
+                                        <p class="text-muted">${student.roll_number}</p>
+                                        <p><i class="fas fa-user-friends"></i> ${student.father_name}</p>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-chart-bar"></i> Academic Results
+                                        </h5>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <thead class="table-dark">
+                                                    <tr>
+                                                        <th>Subject</th>
+                                                        <th class="text-center">Max Marks</th>
+                                                        <th class="text-center">Obtained</th>
+                                                        <th class="text-center">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${subjectsHtml}
+                                                </tbody>
+                                                <tfoot class="${resultBgClass} fw-bold">
+                                                    <tr>
+                                                        <td>TOTAL</td>
+                                                        <td class="text-center">${totalMax}</td>
+                                                        <td class="text-center">${totalObtained}</td>
+                                                        <td class="text-center ${resultClass}">
+                                                            ${resultStatus}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="2">PERCENTAGE</td>
+                                                        <td colspan="2" class="text-center">${percentage}%</td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                        <div class="text-center mt-4">
+                                            <a href="${API_BASE_URL}/generate_pdf.php?id=${student.id}" 
+                                               class="btn btn-success btn-lg" 
+                                               target="_blank">
+                                                <i class="fas fa-download"></i> Download PDF Result
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -228,11 +316,19 @@
                     </div>
                 </div>
             `;
-            
-            resultDiv.style.display = 'flex';
+        }
+
+        function showError(message) {
+            const resultsDiv = document.getElementById('studentResults');
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                    <h4>Error</h4>
+                    <p>${message}</p>
+                </div>
+            `;
+            document.getElementById('resultsSection').style.display = 'block';
         }
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-    </html>
+</html>
